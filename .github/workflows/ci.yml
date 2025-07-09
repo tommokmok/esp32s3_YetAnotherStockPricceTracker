@@ -77,18 +77,8 @@ jobs:
   Windows:
     runs-on: Windows Server 2025
     steps:
-      - name: Activate msys2 & mingw64
-        run: |
-          echo "C:\msys64\usr\bin" >> $env:GITHUB_PATH
-          echo "C:\msys64\mingw64\bin" >> $env:GITHUB_PATH
-
-      - name: Install deps
-        run: |
-          pacman --noconfirm -S --needed mingw-w64-x86_64-SDL2
-          gcc --version
-
       - uses: actions/checkout@v2
-      #- uses: actions/setup-python@v1
+      - uses: actions/setup-python@v1
 
       - name: Install PlatformIO
         run: |
