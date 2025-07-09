@@ -26,8 +26,8 @@ If you need a simple and straightforward API, please check `get_stock_price_all_
 <a href="https://ibb.co/VWYbDJCz"><img src="https://i.ibb.co/VWYbDJCz/device-Info.jpg" alt="Device Info" border="0"></a>
 <a href="https://ibb.co/Kzx6xyb1"><img src="https://i.ibb.co/Kzx6xyb1/homepage2.jpg" alt="Homepage" border="0"></a> 
 
+Don't know why github can't show the gif. You can check the demo in below link:https://i.ibb.co/1fD8GXL8/request.gif
 
-![demo](https://i.ibb.co/1fD8GXL8/request.gif)
 
 ## Features
 
