@@ -250,7 +250,7 @@ void https_get_all_stock_prices(void)
     {
         httpsClient->setCACert(rootCACertificate); // Set the root CA certificate
         httpsClient->setHandshakeTimeout(8000);    // Set handshake timeout
-        httpsClient->setInsecure();                // Disable certificate validation for testing purposes (not recommended for production)
+        // httpsClient->setInsecure();                // Disable certificate validation for testing purposes (not recommended for production)
         for (int i = 0; i < 4; ++i)
         {
 

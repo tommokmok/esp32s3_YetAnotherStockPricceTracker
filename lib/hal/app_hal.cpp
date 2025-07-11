@@ -9,7 +9,7 @@
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
 
-const unsigned int lvBufferSize = screenWidth * screenHeight;
+const unsigned int lvBufferSize = screenWidth * 30;
 uint8_t lvBuffer[2][lvBufferSize];
 
 static lv_display_t *lvDisplay;
