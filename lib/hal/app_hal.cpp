@@ -9,7 +9,7 @@
 static const uint32_t screenWidth = WIDTH;
 static const uint32_t screenHeight = HEIGHT;
 
-const unsigned int lvBufferSize = screenWidth * 30;
+const unsigned int lvBufferSize = screenWidth * screenHeight;
 uint8_t lvBuffer[2][lvBufferSize];
 
 static lv_display_t *lvDisplay;
@@ -75,12 +75,14 @@ void hal_setup(void)
 {
     Serial.println("Starting LVGL setup...");
     Serial.printf("LV definition: LV LOG level=%d, LV_USE_LOG=%d\n", LV_LOG_LEVEL, LV_USE_LOG);
-
+    lv_init();
     /* Initialize the display drivers */
     tft.init();
+    tft.setBrightness(0);
     tft.initDMA();
-    tft.startWrite();
-    tft.fillScreen(TFT_BLACK);
+    // tft.startWrite();
+
+    // tft.fillScreen(TFT_BLACK);
 
     /* Set display rotation to landscape */
     // tft.setRotation(1);
@@ -103,8 +105,8 @@ void hal_setup(void)
     lv_indev_set_type(lvInput, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(lvInput, my_touchpad_read);
 
-    // Test PSRAM
-    #if 0
+// Test PSRAM
+#if 0
     LV_LOG_USER("befor:ESP.getFreeHeap():%d,PSRAM=%d,Free_PSRAM=%d", ESP.getFreeHeap(), ESP.getPsramSize(), ESP.getFreePsram());
 
     ext_color_buf = (uint8_t *)heap_caps_malloc(1024, MALLOC_CAP_SPIRAM);
@@ -112,7 +114,11 @@ void hal_setup(void)
 
     LV_LOG_USER("ext_color_buf:%d,ext_color_buf2=%d", ext_color_buf, ext_color_buf2);
     LV_LOG_USER("after malloc:ESP.getFreeHeap():%d,PSRAM=%d,Free_PSRAM=%d", ESP.getFreeHeap(), ESP.getPsramSize(), ESP.getFreePsram());
-    #endif
+#endif
+
+    lv_timer_handler();
+    delay(100); // Give some time for the display to initialize
+    tft.setBrightness(255);
 }
 
 void hal_loop(void)

@@ -7,16 +7,10 @@
  * @brief   Default main function.
  ******************************************************************************
  */
-
-#include "lvgl.h"
-#include "app_hal.h"
-
-#include "demos/lv_demos.h"
-#include "stock_price_gui.h"
-
 #include <Arduino.h>
+#include "app_hal.h"
+#include "stock_price_gui.h"
 #include <appController.h>
-#include <test.h>
 #include <storage.h>
 
 
@@ -25,7 +19,7 @@ void setup()
     storage_init(); // Initialize storage for persistent data
     Serial.begin(115200);
    
-    lv_init();
+
     hal_setup();
     gui_code_init();
     app_controller_init();
