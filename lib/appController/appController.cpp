@@ -12,6 +12,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/timers.h"
 #include <WiFiClientSecure.h>
+#include "API_TOKENS.h"
 
 const char *rootCACertificate =
     "-----BEGIN CERTIFICATE-----\n"
@@ -38,6 +39,21 @@ const char *rootCACertificate =
     "+OkuE6N36B9K\n"
     "-----END CERTIFICATE-----\n";
 
+const char *FINN_HUB_ROOT_CA = 
+"-----BEGIN CERTIFICATE-----\n"
+"MIICCTCCAY6gAwIBAgINAgPlwGjvYxqccpBQUjAKBggqhkjOPQQDAzBHMQswCQYD\n"
+"VQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2VzIExMQzEUMBIG\n"
+"A1UEAxMLR1RTIFJvb3QgUjQwHhcNMTYwNjIyMDAwMDAwWhcNMzYwNjIyMDAwMDAw\n"
+"WjBHMQswCQYDVQQGEwJVUzEiMCAGA1UEChMZR29vZ2xlIFRydXN0IFNlcnZpY2Vz\n"
+"IExMQzEUMBIGA1UEAxMLR1RTIFJvb3QgUjQwdjAQBgcqhkjOPQIBBgUrgQQAIgNi\n"
+"AATzdHOnaItgrkO4NcWBMHtLSZ37wWHO5t5GvWvVYRg1rkDdc/eJkTBa6zzuhXyi\n"
+"QHY7qca4R9gq55KRanPpsXI5nymfopjTX15YhmUPoYRlBtHci8nHc8iMai/lxKvR\n"
+"HYqjQjBAMA4GA1UdDwEB/wQEAwIBhjAPBgNVHRMBAf8EBTADAQH/MB0GA1UdDgQW\n"
+"BBSATNbrdP9JNqPV2Py1PsVq8JQdjDAKBggqhkjOPQQDAwNpADBmAjEA6ED/g94D\n"
+"9J+uHXqnLrmvT/aDHQ4thQEd0dlq7A/Cr8deVl5c1RxYIigL9zC2L7F8AjEA8GE8\n"
+"p/SgguMh1YQdc4acLa/KNJvxn7kjNuK8YAOdgLOaVsjh4rsUecrNIdSUtUlD\n"
+"-----END CERTIFICATE-----\n";
+
 TaskHandle_t httpTaskHandle = NULL;
 // Add your includes here
 // UI event
@@ -53,6 +69,7 @@ static TimerHandle_t http_timer = NULL;
 String get_stock_price_yahoo(const char *symbol);
 void get_stock_price_all_yahoo(void);
 void connect_to_wifi_async(const char *ssid, const char *password);
+void http_get_all_stock_prices_finnhub(void);
 
 static uint8_t _gui_hide_loading = 0;
 static uint8_t _gui_show_loading = 0;
@@ -235,11 +252,83 @@ void http_get_all_stock_prices(void)
 {
     LV_LOG_USER("HTTP GET all stock prices");
     _gui_show_loading = 1;
-    get_stock_price_all_yahoo();
+    // get_stock_price_all_yahoo();
+    http_get_all_stock_prices_finnhub();
     _gui_hide_loading = 1;
     _gui_update_price = 1;
 
 }
+
+void http_get_all_stock_prices_finnhub(void)
+{
+    String sprice = "N/A"; // Default value if fetching fails
+    char (*symbols)[5] = gui_get_symbol_list();
+    char (*prices)[10] = gui_get_price_list();
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        httpsClient->setCACert(FINN_HUB_ROOT_CA); // Set the root CA certificate
+        httpsClient->setHandshakeTimeout(8000);    // Set handshake timeout
+        // httpsClient->setInsecure();                // Disable certificate validation for testing purposes (not recommended for production)
+        for (int i = 0; i < 4; ++i)
+        {
+
+            String symbol = String(symbols[i]); // Adjust based on your actual data structure
+            Serial.printf("Fetching price for symbol: %s\n", symbol.c_str());
+            _http_status = "Fetching " + symbol + "... ";
+            _gui_update_http_status = 1;
+
+            String url = String("https://finnhub.io/api/v1/quote?symbol=") + symbol + "&token=" + String(FINN_HUB_API_TOKENS);
+            Serial.println(url.c_str());
+            s_http.begin(*httpsClient, url);
+            s_http.setUserAgent("EchoapiRuntime/1.1.0");
+            s_http.setTimeout(5000);
+            // Start external timeout timer
+            // start_http_timeout_timer(10000);
+
+            int httpCode = s_http.GET();
+            stop_http_timeout_timer();
+            if (httpCode == 200)
+            {
+
+                String payload = s_http.getString();
+                // Serial.println("Response: " + payload);
+
+                // Parse JSON
+                JsonDocument doc;
+                DeserializationError error = deserializeJson(doc, payload);
+                if (!error)
+                {
+                    float price = doc["c"];
+                    sprice = "$" + String(price, 2);        // Format price to 2 decimal places
+                    strncpy(prices[i], sprice.c_str(), 10); // Store in prices array
+                }
+                else
+                {
+                    Serial.println("Failed to parse JSON.");
+                }
+            }
+            else
+            {
+                _http_status = "HTTP GET failed, error:" + httpCode;
+                _gui_update_http_status = 1;
+                // gui_update_loading_status(status.c_str());
+                Serial.printf("HTTP GET failed, error: %d\n", httpCode);
+            }
+        }
+        s_http.end();
+        Serial.println("Updated stock prices:");
+        for (int i = 0; i < 4; ++i)
+        {
+            Serial.printf("Symbol: %s, Price: %s\n", symbols[i], prices[i]);
+        }
+    }
+    else
+    {
+        Serial.println("WiFi not connected");
+    }
+}
+
+
 
 void https_get_all_stock_prices(void)
 {
@@ -429,7 +518,6 @@ void http_request_task(void *parameter)
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         LV_LOG_USER("Starting HTTP request task");
         // Perform HTTP request
-        // get_stock_price_yahoo("AAPL");
         http_get_all_stock_prices();
 
     }

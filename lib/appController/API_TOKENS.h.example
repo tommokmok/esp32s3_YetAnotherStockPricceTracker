@@ -1,0 +1,6 @@
+#ifndef MY_API_TOKENS_H
+#define MY_API_TOKENS_H
+
+#define FINN_HUB_API_TOKENS "YOUR_API_TOKEN_HERE"
+
+#endif
